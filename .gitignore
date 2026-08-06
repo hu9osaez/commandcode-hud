@@ -1,0 +1,20 @@
+# Command Code local state
+.commandcode/
+
+# Installed/generated artifacts
+node_modules/
+dist/
+coverage/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# OS/editor files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*~
