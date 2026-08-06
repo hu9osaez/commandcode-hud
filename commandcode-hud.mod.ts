@@ -119,14 +119,16 @@ export default function (cmd: ModApi): void {
   let currentEffort: string | undefined = initialConfig.effort ?? effortFromConfig(currentModel);
 
   const render = (): string => {
-    const parts: string[] = [];
+    const segments: string[] = [];
+    const modelParts: string[] = [];
     if (currentModel) {
-      parts.push(`${ANSI_CYAN}${shortModel(currentModel)}${ANSI_RESET}`);
-      if (currentEffort) parts.push(`${BRAIN} ${currentEffort}`);
+      modelParts.push(`${ANSI_CYAN}${shortModel(currentModel)}${ANSI_RESET}`);
+      if (currentEffort) modelParts.push(`${BRAIN} ${currentEffort}`);
     }
-    if (currentBranch) parts.push(`${ANSI_CYAN}${currentBranch}${ANSI_RESET}`);
-    else parts.push(`${ANSI_DIM}no-branch${ANSI_RESET}`);
-    return parts.join('  ');
+    if (modelParts.length) segments.push(modelParts.join(' '));
+    if (currentBranch) segments.push(`${ANSI_CYAN}${currentBranch}${ANSI_RESET}`);
+    else segments.push(`${ANSI_DIM}no-branch${ANSI_RESET}`);
+    return segments.join(' · ');
   };
 
   const publish = (force = false): void => {
