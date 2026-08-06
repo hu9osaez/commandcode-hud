@@ -1,4 +1,4 @@
-import {readFileSync} from 'node:fs';
+import {readFileSync, statSync} from 'node:fs';
 import type {ModApi} from '@commandcode/harness';
 
 /**
@@ -89,21 +89,34 @@ const effortFromConfig = (model: string): string | undefined => {
   }
 };
 
-const modelFromConfig = (): string | undefined => {
+const CONFIG_PATH = `${process.env.HOME}/.commandcode/config.json`;
+
+const readModelConfig = (): {model?: string; effort?: string; mtimeMs?: number} => {
   try {
-    const config = JSON.parse(readFileSync(`${process.env.HOME}/.commandcode/config.json`, 'utf8')) as Record<string, unknown>;
-    return text(config.model);
+    const stat = statSync(CONFIG_PATH);
+    const parsed = JSON.parse(readFileSync(CONFIG_PATH, 'utf8')) as Record<string, unknown>;
+    const effortMap = record(parsed.reasoningEffort);
+    const model = text(parsed.model);
+    return {
+      model,
+      effort: model ? text(effortMap[model]) ?? undefined : text(parsed.effort) ?? undefined,
+      mtimeMs: stat.mtimeMs,
+    };
   } catch {
-    return undefined;
+    return {};
   }
 };
+
+// Export for tests.
+export const __test = {branchNameFromStatus, readModelConfig};
 
 export default function (cmd: ModApi): void {
   let lastPublished = '';
   let currentBranch: string | undefined;
   const explicitModel = modelFromArgs();
-  let currentModel = explicitModel ?? modelFromConfig() ?? 'gpt-5.6-luna';
-  let currentEffort: string | undefined = effortFromConfig(currentModel);
+  const initialConfig = readModelConfig();
+  let currentModel = explicitModel ?? initialConfig.model ?? 'gpt-5.6-luna';
+  let currentEffort: string | undefined = initialConfig.effort ?? effortFromConfig(currentModel);
 
   const render = (): string => {
     const parts: string[] = [];
@@ -184,6 +197,23 @@ export default function (cmd: ModApi): void {
       publish(forcePublish);
     }
   };
+
+  // `/model` writes ~/.commandcode/config.json. Poll its mtime so the HUD
+  // updates right after the user switches models, without waiting for the
+  // next model_request_start.
+  let lastConfigMtime = readModelConfig().mtimeMs ?? 0;
+  const pollModelConfig = (): void => {
+    const fresh = readModelConfig();
+    if (fresh.mtimeMs === undefined || fresh.mtimeMs === lastConfigMtime) return;
+    lastConfigMtime = fresh.mtimeMs;
+    if (fresh.model && fresh.model !== currentModel) {
+      currentModel = fresh.model;
+      currentEffort = fresh.effort ?? currentEffort;
+      persist();
+      publish(true);
+    }
+  };
+  setInterval(pollModelConfig, 2000).unref();
 
   cmd.hooks({
     onSessionStart: () => {
