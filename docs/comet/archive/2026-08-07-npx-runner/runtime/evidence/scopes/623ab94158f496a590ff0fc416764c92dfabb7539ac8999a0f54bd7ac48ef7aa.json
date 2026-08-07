@@ -1,0 +1,80 @@
+{
+  "schema": "comet.native.implementation-scope.v2",
+  "contractHash": "2af4ac9b09df375f01e2d7c04ee4cd0e3a0942eda58585b2b70d05f86b5faee7",
+  "baselineProjectionRef": "runtime/evidence/snapshots/b60f7d27617c73e6b09228ad20e3dd39b01b6d9aa1b309373865d1220f76fdde.json",
+  "baselineProjectionHash": "b60f7d27617c73e6b09228ad20e3dd39b01b6d9aa1b309373865d1220f76fdde",
+  "currentProjectionRef": "runtime/evidence/snapshots/9d4f59636a1603335c39da562332e778cf14372494a2bf849d81ea5ea65e0b75.json",
+  "currentProjectionHash": "9d4f59636a1603335c39da562332e778cf14372494a2bf849d81ea5ea65e0b75",
+  "complete": true,
+  "declaredArtifacts": [
+    {
+      "path": "README.md",
+      "kind": "file"
+    },
+    {
+      "path": "bin/commandcode-hud.js",
+      "kind": "file"
+    },
+    {
+      "path": "package.json",
+      "kind": "file"
+    }
+  ],
+  "changes": [
+    {
+      "path": "README.md",
+      "kind": "modified",
+      "before": {
+        "hash": "acffbbe835b99a993e23e2bc8d8bcb6ba1b2d91eea539c5348dc802751d58f54",
+        "size": 2834
+      },
+      "after": {
+        "hash": "c00468d377f8e29c7d2210b0d21a465d2b882493152491f80a882febecb4e3d6",
+        "size": 2832
+      },
+      "attributedTo": [
+        {
+          "path": "README.md",
+          "kind": "file"
+        }
+      ]
+    },
+    {
+      "path": "bin/commandcode-hud.js",
+      "kind": "added",
+      "before": null,
+      "after": {
+        "hash": "f3d1ca090c55b75e17c4e4024593fbb6cd4630f98151957cf5724793cb99ebeb",
+        "size": 3183
+      },
+      "attributedTo": [
+        {
+          "path": "bin/commandcode-hud.js",
+          "kind": "file"
+        }
+      ]
+    },
+    {
+      "path": "package.json",
+      "kind": "modified",
+      "before": {
+        "hash": "931caa2786352bc623c5cc1ba338805379c8dcfbae97dd07459478a0b55b626a",
+        "size": 703
+      },
+      "after": {
+        "hash": "bb0e3f499a01f430d0d35e9e926efdab51a7031e17949d6f7f54311d245f968c",
+        "size": 646
+      },
+      "attributedTo": [
+        {
+          "path": "package.json",
+          "kind": "file"
+        }
+      ]
+    }
+  ],
+  "unattributed": [],
+  "unresolvedScopes": [],
+  "noCodeReason": null,
+  "scopeHash": "623ab94158f496a590ff0fc416764c92dfabb7539ac8999a0f54bd7ac48ef7aa"
+}

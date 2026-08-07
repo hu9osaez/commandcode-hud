@@ -1,0 +1,48 @@
+{
+  "schema": "comet.native.verification-receipt.v3",
+  "kind": "automated-check",
+  "role": "acceptance-evidence",
+  "status": "passed",
+  "bindings": {
+    "change": "npx-runner",
+    "sourceRevision": 3,
+    "contractHash": "2af4ac9b09df375f01e2d7c04ee4cd0e3a0942eda58585b2b70d05f86b5faee7",
+    "scopeHash": "623ab94158f496a590ff0fc416764c92dfabb7539ac8999a0f54bd7ac48ef7aa",
+    "snapshotHash": "9d4f59636a1603335c39da562332e778cf14372494a2bf849d81ea5ea65e0b75",
+    "artifactHash": "b09c4aac1814783f62dcbf423e8fd86a2fcc0a56506810c1335de9e3ed263f46"
+  },
+  "acceptanceIds": [
+    "acceptance-ff225f15ffedd170423c31f49f354a0948638b0fe250241bf4c977351a3a93c7"
+  ],
+  "actor": "native-runtime:command:npm",
+  "issuedAt": "2026-08-07T01:34:46.910Z",
+  "evidence": {
+    "executable": "npm",
+    "args": [
+      "pack",
+      "--dry-run"
+    ],
+    "cwd": ".",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false,
+    "timeoutMs": 120000,
+    "startedAt": "2026-08-07T01:34:46.435Z",
+    "endedAt": "2026-08-07T01:34:46.910Z",
+    "worktree": {
+      "provider": "git",
+      "root": ".",
+      "beforeCommit": "bed832587a7decf23d7cd8bb42ee31824d4bf9a0",
+      "afterCommit": "bed832587a7decf23d7cd8bb42ee31824d4bf9a0"
+    },
+    "afterFence": {
+      "snapshotHash": "9d4f59636a1603335c39da562332e778cf14372494a2bf849d81ea5ea65e0b75",
+      "scopeHash": "623ab94158f496a590ff0fc416764c92dfabb7539ac8999a0f54bd7ac48ef7aa",
+      "matched": true
+    },
+    "outputHash": "6d2e1b3873a110724848ca740d13daa42ad5cfc60325c066ff0a0a66800d58ea",
+    "outputSummary": "npm notice\nnpm notice 📦  @hu9osaez/commandcode-hud@0.1.0\nnpm notice Tarball Contents\nnpm notice 1.1kB LICENSE\nnpm notice 2.8kB README.md\nnpm notice 3.2kB bin/commandcode-hud.js\nnpm notice 13.1kB commandcode-hud.mod.ts\nnpm notice 646B package.json\nnpm notice Tarball Details\nnpm notice name: @hu9osaez/commandcode-hud\nnpm notice version: 0.1.0\nnpm notice filename: hu9osaez-commandcode-hud-0.1.0.tgz\nnpm notice package size: 7.5 kB\nnpm notice unpacked size: 20.8 kB\nnpm notice shasum: 0158392be81df4bc07b8d040ed0414fb78ced468\nnpm notice integrity: sha512-5AtFtutNXNIvq[...]n4tsG0l3bQ1Sw==\nnpm notice total files: 5\nnpm notice\nhu9osaez-commandcode-hud-0.1.0.tgz",
+    "outputTruncated": false
+  },
+  "receiptHash": "f693f7f04f994c596bfc4f646fd6e897341b692cd33f376d1c2e7dd9c435dfeb"
+}

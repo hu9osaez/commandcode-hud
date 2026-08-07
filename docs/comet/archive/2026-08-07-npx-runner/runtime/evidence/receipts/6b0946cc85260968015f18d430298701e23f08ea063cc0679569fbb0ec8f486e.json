@@ -1,0 +1,48 @@
+{
+  "schema": "comet.native.verification-receipt.v3",
+  "kind": "automated-check",
+  "role": "acceptance-evidence",
+  "status": "passed",
+  "bindings": {
+    "change": "npx-runner",
+    "sourceRevision": 3,
+    "contractHash": "2af4ac9b09df375f01e2d7c04ee4cd0e3a0942eda58585b2b70d05f86b5faee7",
+    "scopeHash": "623ab94158f496a590ff0fc416764c92dfabb7539ac8999a0f54bd7ac48ef7aa",
+    "snapshotHash": "9d4f59636a1603335c39da562332e778cf14372494a2bf849d81ea5ea65e0b75",
+    "artifactHash": "b09c4aac1814783f62dcbf423e8fd86a2fcc0a56506810c1335de9e3ed263f46"
+  },
+  "acceptanceIds": [
+    "acceptance-0e4c1d15452e0052555f98d60dcff1d60eb2cbac86b714f763b1d86b319a321e"
+  ],
+  "actor": "native-runtime:command:node",
+  "issuedAt": "2026-08-07T01:34:47.487Z",
+  "evidence": {
+    "executable": "node",
+    "args": [
+      "bin/commandcode-hud.js",
+      "--help"
+    ],
+    "cwd": ".",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false,
+    "timeoutMs": 120000,
+    "startedAt": "2026-08-07T01:34:47.443Z",
+    "endedAt": "2026-08-07T01:34:47.487Z",
+    "worktree": {
+      "provider": "git",
+      "root": ".",
+      "beforeCommit": "bed832587a7decf23d7cd8bb42ee31824d4bf9a0",
+      "afterCommit": "bed832587a7decf23d7cd8bb42ee31824d4bf9a0"
+    },
+    "afterFence": {
+      "snapshotHash": "9d4f59636a1603335c39da562332e778cf14372494a2bf849d81ea5ea65e0b75",
+      "scopeHash": "623ab94158f496a590ff0fc416764c92dfabb7539ac8999a0f54bd7ac48ef7aa",
+      "matched": true
+    },
+    "outputHash": "529dc36535c6a538d1213a7bfb2f3ef06636545c8f97615f05f1971d392f3b31",
+    "outputSummary": "commandcode-hud v0.1.0\n\nInstalls the commandcode-hud native mod for Command Code.\n\nUsage:\n  npx @hu9osaez/commandcode-hud           Install (or update) the mod and verify\n  npx @hu9osaez/commandcode-hud --verify  Check the installed mod matches this version\n  npx @hu9osaez/commandcode-hud --uninstall  Remove the installed mod\n  npx @hu9osaez/commandcode-hud --help    Show this help\n  npx @hu9osaez/commandcode-hud --version Show the package version\n\nInstalls to: /Users/hu9osaez/.commandcode/mods/commandcode-hud.ts",
+    "outputTruncated": false
+  },
+  "receiptHash": "6b0946cc85260968015f18d430298701e23f08ea063cc0679569fbb0ec8f486e"
+}

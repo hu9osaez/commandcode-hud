@@ -1,7 +1,7 @@
 {
   "name": "@hu9osaez/commandcode-hud",
   "version": "0.1.0",
-  "description": "Native Command Code mod that shows model, reasoning effort, context usage and Git branch in the mods status line.",
+  "description": "One-shot npx installer + native Command Code mod showing model, reasoning effort, context usage and Git branch in the mods status line.",
   "type": "module",
   "license": "MIT",
   "engines": {
@@ -9,6 +9,7 @@
   },
   "files": [
     "commandcode-hud.mod.ts",
+    "bin",
     "README.md",
     "LICENSE"
   ],
@@ -23,7 +24,7 @@
     "type": "git",
     "url": "https://github.com/hu9osaez/commandcode-hud"
   },
-  "scripts": {
-    "install:mod": "mkdir -p \"$HOME/.commandcode/mods\" && cp commandcode-hud.mod.ts \"$HOME/.commandcode/mods/commandcode-hud.ts\""
+  "bin": {
+    "commandcode-hud": "bin/commandcode-hud.js"
   }
 }
