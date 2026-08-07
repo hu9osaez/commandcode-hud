@@ -1,0 +1,77 @@
+{
+  "schema": "comet.native.implementation-scope.v2",
+  "contractHash": "c3c18f8b291fa9169ec106b9893d581fec0c4b1648f43ed54be14cb6468d60c5",
+  "baselineProjectionRef": "runtime/evidence/snapshots/96be21dc01625abcd90cda8af6c20ad54e37dccdc6a0289c9eb2c606ee6d35ab.json",
+  "baselineProjectionHash": "96be21dc01625abcd90cda8af6c20ad54e37dccdc6a0289c9eb2c606ee6d35ab",
+  "currentProjectionRef": "runtime/evidence/snapshots/89180dead4cef55eeb49d262d4962014352eee0d68a2cfc6471afc2cfbb21013.json",
+  "currentProjectionHash": "89180dead4cef55eeb49d262d4962014352eee0d68a2cfc6471afc2cfbb21013",
+  "complete": true,
+  "declaredArtifacts": [
+    {
+      "path": "LICENSE",
+      "kind": "file"
+    },
+    {
+      "path": "README.md",
+      "kind": "file"
+    },
+    {
+      "path": "package.json",
+      "kind": "file"
+    }
+  ],
+  "changes": [
+    {
+      "path": "LICENSE",
+      "kind": "added",
+      "before": null,
+      "after": {
+        "hash": "6dda23760570cc1eeaf9d26db9189912c6508a84ca04a656595bd7432752c1da",
+        "size": 1065
+      },
+      "attributedTo": [
+        {
+          "path": "LICENSE",
+          "kind": "file"
+        }
+      ]
+    },
+    {
+      "path": "README.md",
+      "kind": "modified",
+      "before": {
+        "hash": "55c1000d540b3ef49aa58e47493005af5834c33b3c3bf55992f658f4a36b50a6",
+        "size": 1594
+      },
+      "after": {
+        "hash": "acffbbe835b99a993e23e2bc8d8bcb6ba1b2d91eea539c5348dc802751d58f54",
+        "size": 2834
+      },
+      "attributedTo": [
+        {
+          "path": "README.md",
+          "kind": "file"
+        }
+      ]
+    },
+    {
+      "path": "package.json",
+      "kind": "added",
+      "before": null,
+      "after": {
+        "hash": "931caa2786352bc623c5cc1ba338805379c8dcfbae97dd07459478a0b55b626a",
+        "size": 703
+      },
+      "attributedTo": [
+        {
+          "path": "package.json",
+          "kind": "file"
+        }
+      ]
+    }
+  ],
+  "unattributed": [],
+  "unresolvedScopes": [],
+  "noCodeReason": null,
+  "scopeHash": "03cd4b070fc4d89f5d7f749462e3e4b365089db2d889b0f6aea6d01d93c98289"
+}

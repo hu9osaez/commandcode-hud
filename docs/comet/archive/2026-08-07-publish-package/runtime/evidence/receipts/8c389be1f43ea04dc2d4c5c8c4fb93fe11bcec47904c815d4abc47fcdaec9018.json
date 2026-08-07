@@ -1,0 +1,29 @@
+{
+  "schema": "comet.native.verification-receipt.v3",
+  "kind": "static-inspection",
+  "role": "required-check",
+  "status": "passed",
+  "bindings": {
+    "change": "publish-package",
+    "sourceRevision": 3,
+    "contractHash": "c3c18f8b291fa9169ec106b9893d581fec0c4b1648f43ed54be14cb6468d60c5",
+    "scopeHash": "03cd4b070fc4d89f5d7f749462e3e4b365089db2d889b0f6aea6d01d93c98289",
+    "snapshotHash": "89180dead4cef55eeb49d262d4962014352eee0d68a2cfc6471afc2cfbb21013",
+    "artifactHash": "d0f6a5c9dbfdd3db6224d0ac79cef0f7000084afbded122bb8186f7fd9df6d0a"
+  },
+  "acceptanceIds": [],
+  "actor": "native-runtime:scoped-text-safety",
+  "issuedAt": "2026-08-07T01:19:32.820Z",
+  "evidence": {
+    "subjects": [
+      "LICENSE",
+      "README.md",
+      "package.json"
+    ],
+    "rule": "scoped-text-safety",
+    "resultSummary": "The built-in scoped inspection passed without skipped or blocking input.",
+    "checkReceiptRef": "runtime/evidence/check-receipts/701f02b439f15dc23dc5ae48f5ddd410174ccfc35c59ec5fc5cae9d0f2937ad9.json",
+    "checkReceiptHash": "701f02b439f15dc23dc5ae48f5ddd410174ccfc35c59ec5fc5cae9d0f2937ad9"
+  },
+  "receiptHash": "8c389be1f43ea04dc2d4c5c8c4fb93fe11bcec47904c815d4abc47fcdaec9018"
+}

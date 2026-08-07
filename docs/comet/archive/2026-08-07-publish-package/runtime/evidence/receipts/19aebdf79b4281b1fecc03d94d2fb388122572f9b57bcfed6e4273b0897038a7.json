@@ -1,0 +1,31 @@
+{
+  "schema": "comet.native.verification-receipt.v3",
+  "kind": "manual-evidence",
+  "role": "acceptance-evidence",
+  "status": "passed",
+  "bindings": {
+    "change": "publish-package",
+    "sourceRevision": 3,
+    "contractHash": "c3c18f8b291fa9169ec106b9893d581fec0c4b1648f43ed54be14cb6468d60c5",
+    "scopeHash": "03cd4b070fc4d89f5d7f749462e3e4b365089db2d889b0f6aea6d01d93c98289",
+    "snapshotHash": "89180dead4cef55eeb49d262d4962014352eee0d68a2cfc6471afc2cfbb21013",
+    "artifactHash": "d0f6a5c9dbfdd3db6224d0ac79cef0f7000084afbded122bb8186f7fd9df6d0a"
+  },
+  "acceptanceIds": [
+    "acceptance-38c019453119cd458b7a33f5ee0fcaae2036b614ea86a72b32dd5562046b2b5f",
+    "acceptance-3aae2f8ad4cf6ff8e2166c720d063e1341ce3e37e10e97cb862c4c9f4b473e60",
+    "acceptance-4e70fb78a516502464713ab553fcd724781f168e192944c1a5d332e013e5b31d",
+    "acceptance-50da35b954036e03a2a8318905dc6334b5816845c637299225a0b6ee3e50923f"
+  ],
+  "actor": "native-runtime:manual-evidence",
+  "issuedAt": "2026-08-07T01:18:36.420Z",
+  "evidence": {
+    "steps": [
+      "Revisión documental del README.md"
+    ],
+    "observations": [
+      "README documenta render con ctx y 🧠, session usage (/reload,/resume,/new), instalación @hu9osaez/commandcode-hud con install:mod, y limitaciones de 1.14.1"
+    ]
+  },
+  "receiptHash": "19aebdf79b4281b1fecc03d94d2fb388122572f9b57bcfed6e4273b0897038a7"
+}
