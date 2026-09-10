@@ -1,6 +1,6 @@
 {
   "name": "@hu9osaez/commandcode-hud",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "One-shot npx installer + native Command Code mod showing model, reasoning effort, context usage and Git branch in the mods status line.",
   "type": "module",
   "license": "MIT",
