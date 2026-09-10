@@ -30,7 +30,113 @@ import type {ModApi} from '@commandcode/harness';
 const ANSI_CYAN = '\u001b[36m';
 const ANSI_DIM = '\u001b[2m';
 const ANSI_RESET = '\u001b[0m';
+const ANSI_YELLOW = '\u001b[33m';
 const BRAIN = '\uD83E\uDDE0';
+
+// Context windows per model, mirroring the official list at
+// https://commandcode.ai/models (52 models) and Command Code's model registry
+// (dist/cli.mjs contextWindow). Used to render `ctx used/limit`.
+// IDs match `cmd --list-models` / config.json (lowercase).
+const CONTEXT_LIMITS: Record<string, number> = {
+  // GPT-5.x
+  'gpt-5.6-luna': 1_050_000,
+  'gpt-5.6-sol': 1_050_000,
+  'gpt-5.6-terra': 1_050_000,
+  'gpt-5.5': 200_000,
+  'gpt-5.4': 400_000,
+  'gpt-5.4-mini': 400_000,
+  'gpt-5.3-codex': 400_000,
+  // Claude
+  'claude-opus-5': 1_000_000,
+  'claude-opus-4-8': 1_000_000,
+  'claude-opus-4-7': 1_000_000,
+  'claude-sonnet-5': 1_000_000,
+  'claude-sonnet-4-6': 1_000_000,
+  'claude-fable-5': 1_000_000,
+  'claude-haiku-4-5-20251001': 200_000,
+  // DeepSeek
+  'deepseek/deepseek-v4-pro': 1_000_000,
+  'deepseek/deepseek-v4-flash': 1_000_000,
+  // Gemini
+  'google/gemini-3.6-flash': 1_000_000,
+  'google/gemini-3.5-flash': 1_000_000,
+  'google/gemini-3.5-flash-lite': 1_000_000,
+  'google/gemini-3.1-flash-lite': 1_000_000,
+  // Grok
+  'xai/grok-4.5': 500_000,
+  // Kimi
+  'moonshotai/kimi-k3': 1_000_000,
+  'moonshotai/kimi-k2.7-code-highspeed': 262_000,
+  'moonshotai/kimi-k2.7-code': 256_000,
+  'moonshotai/kimi-k2.6': 256_000,
+  'moonshotai/kimi-k2.5': 256_000,
+  // GLM
+  'zai-org/glm-5.2': 1_000_000,
+  'zai-org/glm-5.2-fast': 1_000_000,
+  'zai-org/glm-5.1': 200_000,
+  'zai-org/glm-5': 200_000,
+  // Qwen
+  'qwen/qwen3.8-max': 1_000_000,
+  'qwen/qwen3.7-max': 1_000_000,
+  'qwen/qwen3.7-plus': 1_000_000,
+  'qwen/qwen3.7-flash': 1_000_000,
+  'qwen/qwen3.6-max-preview': 200_000,
+  'qwen/qwen3.6-plus': 200_000,
+  // Muse
+  'meta/muse-spark-1.1': 1_048_576,
+  'meta/muse-spark-1.2': 1_048_576,
+  'meta/muse-spark-1.2-contributor': 1_048_576,
+  // MiniMax
+  'minimaxai/minimax-m3': 1_000_000,
+  'minimaxai/minimax-m3-free': 1_000_000,
+  'minimaxai/minimax-m2.7': 200_000,
+  'minimaxai/minimax-m2.5': 200_000,
+  // Step
+  'stepfun/step-3.7-flash': 256_000,
+  'stepfun/step-3.5-flash': 1_000_000,
+  // Tencent
+  'tencent/hy3-paid': 262_000,
+  'tencent/hy3': 262_000,
+  // Fugu
+  'sakana/fugu-ultra': 1_000_000,
+  // Nemotron
+  'nvidia/nemotron-3-ultra-550b-a55b': 1_000_000,
+  // MiMo
+  'xiaomi/mimo-v2.5-pro': 1_000_000,
+  'xiaomi/mimo-v2.5': 1_000_000,
+  // Inkling
+  'thinkingmachines/inkling': 256_000,
+  'thinkingmachines/inkling-small': 1_000_000,
+  // Laguna
+  'poolside/laguna-s-2.1-free': 256_000,
+};
+
+const contextLimitFor = (model: string | undefined): number => {
+  if (!model) return 0;
+  if (CONTEXT_LIMITS[model]) return CONTEXT_LIMITS[model];
+  // Also accept short names (after the last "/") and case-insensitive lookups.
+  const short = model.includes('/') ? model.slice(model.lastIndexOf('/') + 1) : model;
+  const exact = CONTEXT_LIMITS[short] ?? CONTEXT_LIMITS[model.toLowerCase()];
+  if (exact) return exact;
+  // Reverse lookup: find any registered id ending with the given short name.
+  for (const [id, limit] of Object.entries(CONTEXT_LIMITS)) {
+    if (id.slice(id.lastIndexOf('/') + 1) === short) return limit;
+  }
+  // Unknown model: omit the ctx segment rather than show a wrong value.
+  return 0;
+};
+
+const formatTokens = (value: number): string => {
+  if (value >= 1_000_000) {
+    const m = value / 1_000_000;
+    return `${Number.isInteger(m) ? m : m.toFixed(1)}M`;
+  }
+  if (value >= 1_000) {
+    const k = value / 1_000;
+    return `${Number.isInteger(k) ? k : k.toFixed(1)}k`;
+  }
+  return String(value);
+};
 
 const STATE_ENTRY_TYPE = 'commandcode-hud/state-v1';
 
@@ -108,7 +214,7 @@ const readModelConfig = (): {model?: string; effort?: string; mtimeMs?: number} 
 };
 
 // Export for tests.
-export const __test = {branchNameFromStatus, readModelConfig};
+export const __test = {branchNameFromStatus, readModelConfig, contextLimitFor, formatTokens};
 
 export default function (cmd: ModApi): void {
   let lastPublished = '';
@@ -117,6 +223,7 @@ export default function (cmd: ModApi): void {
   const initialConfig = readModelConfig();
   let currentModel = explicitModel ?? initialConfig.model ?? 'gpt-5.6-luna';
   let currentEffort: string | undefined = initialConfig.effort ?? effortFromConfig(currentModel);
+  let usedTokens = 0;
 
   const render = (): string => {
     const segments: string[] = [];
@@ -126,6 +233,11 @@ export default function (cmd: ModApi): void {
       if (currentEffort) modelParts.push(`${BRAIN} ${currentEffort}`);
     }
     if (modelParts.length) segments.push(modelParts.join(' '));
+    const limit = contextLimitFor(currentModel);
+    if (limit > 0) {
+      const percent = Math.min(100, Math.round((usedTokens / limit) * 100));
+      segments.push(`${ANSI_YELLOW}ctx ${percent}% · ${formatTokens(usedTokens)}/${formatTokens(limit)}${ANSI_RESET}`);
+    }
     if (currentBranch) segments.push(`${ANSI_CYAN}${currentBranch}${ANSI_RESET}`);
     else segments.push(`${ANSI_DIM}no-branch${ANSI_RESET}`);
     return segments.join(' · ');
@@ -141,7 +253,7 @@ export default function (cmd: ModApi): void {
   const persist = (): void => {
     cmd.session?.appendCustomEntry({
       customType: STATE_ENTRY_TYPE,
-      data: {branch: currentBranch, model: currentModel, effort: currentEffort},
+      data: {branch: currentBranch, model: currentModel, effort: currentEffort, usedTokens},
     });
   };
 
@@ -156,6 +268,8 @@ export default function (cmd: ModApi): void {
     currentBranch = text(last['branch']);
     currentModel = explicitModel ?? text(last['model']) ?? currentModel;
     currentEffort = text(last['effort']) ?? currentEffort ?? effortFromConfig(currentModel);
+    const storedTokens = record(last).usedTokens;
+    if (typeof storedTokens === 'number') usedTokens = storedTokens;
     lastPublished = '';
     publish(true);
   };
@@ -192,6 +306,14 @@ export default function (cmd: ModApi): void {
     // Only overwrite effort if present; don't clear an earlier effort on empty events
     if (effortNew) {
       currentEffort = effortNew;
+      changed = true;
+    }
+    // model_request_end usage → used context tokens (input + cache reads), same
+    // source the TUI context meter uses.
+    const usage = record(value.usage);
+    const inputTokens = usage.inputTokens;
+    if (typeof inputTokens === 'number' && inputTokens > 0) {
+      usedTokens = inputTokens;
       changed = true;
     }
     if (changed) {
