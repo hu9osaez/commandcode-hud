@@ -192,6 +192,118 @@ const formatDuration = (elapsedMs: number): string | undefined => {
   return `${min}m${sec % 60}s`;
 };
 
+const AUTH_PATH = `${process.env.HOME}/.commandcode/auth.json`;
+const BILLING_URL = 'https://api.commandcode.ai/alpha/billing/credits';
+const BILLING_TTL_MS = 60_000;
+
+interface RateWindowData {
+  usedPct: number;
+  resetAt?: number;
+}
+
+interface BillingData {
+  creditsRemaining?: number;
+  fiveHour?: RateWindowData;
+  weekly?: RateWindowData;
+}
+
+const readApiKeyFrom = (path: string): string | undefined => {
+  try {
+    const parsed = JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>;
+    return text(parsed['apiKey']);
+  } catch {
+    return undefined;
+  }
+};
+
+const parseBilling = (stdout: string, code: number): BillingData | undefined => {
+  if (code !== 0) return undefined;
+  let root: unknown;
+  try {
+    root = JSON.parse(stdout);
+  } catch {
+    return undefined;
+  }
+  const out: BillingData = {};
+  const monthly = record(record(root).credits).monthlyCredits;
+  if (typeof monthly === 'number' && Number.isFinite(monthly) && monthly >= 0) {
+    out.creditsRemaining = monthly;
+  }
+  const windows = record(record(root).windowLimits);
+  const parseWindow = (key: string): RateWindowData | undefined => {
+    const w = record(windows[key]);
+    const cap = w['cap'];
+    if (typeof cap !== 'number' || !(cap > 0)) return undefined;
+    const used = typeof w['used'] === 'number' && w['used'] >= 0 ? w['used'] : 0;
+    const resetAt = typeof w['resetAt'] === 'number' && w['resetAt'] > 0 ? w['resetAt'] : undefined;
+    return {usedPct: Math.min(100, Math.round((used / cap) * 100)), resetAt};
+  };
+  const fiveHour = parseWindow('fiveHour');
+  if (fiveHour) out.fiveHour = fiveHour;
+  const weekly = parseWindow('weekly');
+  if (weekly) out.weekly = weekly;
+  return Object.keys(out).length > 0 ? out : undefined;
+};
+
+const formatCountdown = (resetAtMs: number, nowMs: number): string | undefined => {
+  const min = Math.floor((resetAtMs - nowMs) / 60_000);
+  if (min < 1) return undefined;
+  const h = Math.floor(min / 60);
+  if (h >= 24) return `${Math.floor(h / 24)}d${h % 24}h`;
+  if (h >= 1) return `${h}h${min % 60}m`;
+  return `${min}m`;
+};
+
+const formatCredits = (amount: number): string =>
+  `${amount <= 0 ? ANSI_RED : ''}$${Math.max(0, amount).toFixed(2)}${amount <= 0 ? ANSI_RESET : ''}`;
+
+const renderRateWindow = (label: string, w: RateWindowData, nowMs: number): string => {
+  const color = w.usedPct >= 90 ? ANSI_RED : w.usedPct >= 70 ? ANSI_YELLOW : ANSI_GREEN;
+  const countdown = w.resetAt !== undefined ? formatCountdown(w.resetAt, nowMs) : undefined;
+  const suffix = countdown ? ` ${ANSI_DIM}(${countdown})${ANSI_RESET}` : '';
+  return `${color}${label} ${w.usedPct}%${ANSI_RESET}${suffix}`;
+};
+
+interface BillingFetcher {
+  get: () => BillingData | undefined;
+  refresh: () => Promise<void>;
+}
+
+const createBillingFetcher = (deps: {
+  exec: (opts: {command: string; args: string[]}) => Promise<{code: number; stdout: string}>;
+  readKey: () => string | undefined;
+  ttlMs?: number;
+  now?: () => number;
+}): BillingFetcher => {
+  const ttlMs = deps.ttlMs ?? BILLING_TTL_MS;
+  const now = deps.now ?? Date.now;
+  let cache: {data: BillingData; at: number} | undefined;
+  let lastAttempt = -Infinity;
+  let inFlight = false;
+  return {
+    get: () => cache?.data,
+    refresh: async (): Promise<void> => {
+      if (inFlight || now() - lastAttempt < ttlMs) return;
+      const key = deps.readKey();
+      if (!key) return;
+      lastAttempt = now();
+      inFlight = true;
+      try {
+        const result = await deps.exec({
+          command: 'curl',
+          args: ['-s', '-m', '10', '-H', `Authorization: Bearer ${key}`, '-H', 'Accept: application/json', BILLING_URL],
+        });
+        const parsed = parseBilling(String(result?.stdout ?? ''), result?.code ?? 1);
+        if (parsed) cache = {data: parsed, at: now()};
+      } catch {
+        // Silent degradation: segments stay hidden until the next TTL window.
+      } finally {
+        inFlight = false;
+      }
+    },
+  };
+};
+
 const record = (value: unknown): Record<string, unknown> =>
   value !== null && typeof value === 'object' ? value as Record<string, unknown> : {};
 
@@ -274,6 +386,12 @@ export const __test = {
   formatTokens,
   formatDuration,
   renderCtxBar,
+  readApiKeyFrom,
+  parseBilling,
+  formatCountdown,
+  formatCredits,
+  renderRateWindow,
+  createBillingFetcher,
 };
 
 export default function (cmd: ModApi): void {
@@ -286,6 +404,11 @@ export default function (cmd: ModApi): void {
   let usedTokens = 0;
   let currentDirty = false;
   let sessionStartedAt: number = Date.now();
+  const billing = createBillingFetcher({exec: cmd.exec, readKey: () => readApiKeyFrom(AUTH_PATH)});
+  const refreshBilling = async (): Promise<void> => {
+    await billing.refresh();
+    publish();
+  };
 
   const render = (): string => {
     const segments: string[] = [];
@@ -309,7 +432,20 @@ export default function (cmd: ModApi): void {
     }
     const duration = formatDuration(Date.now() - sessionStartedAt);
     if (duration) segments.push(`${ANSI_DIM}${duration}${ANSI_RESET}`);
-    return segments.join(' · ');
+    // Billing goes on a second status line (the installer patches the CLI
+    // sanitizer to allow \n; unpatched runtimes collapse it to a space).
+    const billingSegments: string[] = [];
+    const billingData = billing.get();
+    if (billingData) {
+      const nowMs = Date.now();
+      if (billingData.fiveHour) billingSegments.push(renderRateWindow('5h', billingData.fiveHour, nowMs));
+      if (billingData.weekly) billingSegments.push(renderRateWindow('wk', billingData.weekly, nowMs));
+      if (billingData.creditsRemaining !== undefined) {
+        billingSegments.push(formatCredits(billingData.creditsRemaining));
+      }
+    }
+    const line = segments.join(' · ');
+    return billingSegments.length > 0 ? `${line}\n${billingSegments.join(' · ')}` : line;
   };
 
   const publish = (force = false): void => {
@@ -452,11 +588,13 @@ export default function (cmd: ModApi): void {
 
   cmd.on('run_end', () => {
     void refreshBranch();
+    void refreshBilling();
   });
 
   // Immediate first paint for interactive sessions.
   restore();
   void refreshBranch();
+  void refreshBilling();
   // Also publish model context early if we restored it, before any model event fires
   publish(true);
 }
