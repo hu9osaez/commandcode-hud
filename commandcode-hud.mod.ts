@@ -34,15 +34,18 @@ const ANSI_YELLOW = '\u001b[33m';
 const BRAIN = '\uD83E\uDDE0';
 
 // Context windows per model, mirroring the official list at
-// https://commandcode.ai/models (52 models) and Command Code's model registry
-// (dist/cli.mjs contextWindow). Used to render `ctx used/limit`.
+// https://commandcode.ai/models (70 models) and Command Code 1.53.0's canonical
+// registry (dist/cli.mjs getKnownModelContextWindow). Used to render `ctx used/limit`.
 // IDs match `cmd --list-models` / config.json (lowercase).
+// GLM-5.1, MiniMax M2.7 (paid) and Qwen 3.6.x are absent from the dist table;
+// their values come from the official website.
 const CONTEXT_LIMITS: Record<string, number> = {
-  // GPT-5.x
+  // GPT-6 / GPT-5.x
+  'gpt-6-astra': 1_050_000,
   'gpt-5.6-luna': 1_050_000,
   'gpt-5.6-sol': 1_050_000,
   'gpt-5.6-terra': 1_050_000,
-  'gpt-5.5': 200_000,
+  'gpt-5.5': 400_000,
   'gpt-5.4': 400_000,
   'gpt-5.4-mini': 400_000,
   'gpt-5.3-codex': 400_000,
@@ -52,17 +55,24 @@ const CONTEXT_LIMITS: Record<string, number> = {
   'claude-opus-4-7': 1_000_000,
   'claude-sonnet-5': 1_000_000,
   'claude-sonnet-4-6': 1_000_000,
+  'claude-fable-5-1': 1_000_000,
   'claude-fable-5': 1_000_000,
   'claude-haiku-4-5-20251001': 200_000,
   // DeepSeek
+  'deepseek/deepseek-v4.1-flash': 1_000_000,
+  'deepseek/deepseek-v4-flash-vision-exp': 1_000_000,
+  'deepseek/deepseek-v4-flash-fast': 1_000_000,
   'deepseek/deepseek-v4-pro': 1_000_000,
   'deepseek/deepseek-v4-flash': 1_000_000,
   // Gemini
+  'google/gemini-3.8-flash': 1_000_000,
+  'google/gemini-3.7-flash': 1_048_576,
   'google/gemini-3.6-flash': 1_000_000,
   'google/gemini-3.5-flash': 1_000_000,
   'google/gemini-3.5-flash-lite': 1_000_000,
   'google/gemini-3.1-flash-lite': 1_000_000,
   // Grok
+  'xai/grok-4.6': 500_000,
   'xai/grok-4.5': 500_000,
   // Kimi
   'moonshotai/kimi-k3': 1_000_000,
@@ -71,11 +81,16 @@ const CONTEXT_LIMITS: Record<string, number> = {
   'moonshotai/kimi-k2.6': 256_000,
   'moonshotai/kimi-k2.5': 256_000,
   // GLM
+  'z-ai/glm-5.3-flash': 1_048_576,
+  'zai-org/glm-5.3': 1_000_000,
   'zai-org/glm-5.2': 1_000_000,
   'zai-org/glm-5.2-fast': 1_000_000,
   'zai-org/glm-5.1': 200_000,
   'zai-org/glm-5': 200_000,
   // Qwen
+  'qwen/qwen3.8-max-0902': 1_000_000,
+  'qwen/qwen3.8-flash': 1_000_000,
+  'qwen/qwen3.8-27b': 262_144,
   'qwen/qwen3.8-max': 1_000_000,
   'qwen/qwen3.7-max': 1_000_000,
   'qwen/qwen3.7-plus': 1_000_000,
@@ -83,20 +98,24 @@ const CONTEXT_LIMITS: Record<string, number> = {
   'qwen/qwen3.6-max-preview': 200_000,
   'qwen/qwen3.6-plus': 200_000,
   // Muse
+  'meta/muse-spark-1.3': 1_048_576,
+  'meta/muse-spark-1.3-contributor': 1_048_576,
   'meta/muse-spark-1.1': 1_048_576,
   'meta/muse-spark-1.2': 1_048_576,
   'meta/muse-spark-1.2-contributor': 1_048_576,
   // MiniMax
   'minimaxai/minimax-m3': 1_000_000,
   'minimaxai/minimax-m3-free': 1_000_000,
+  'minimaxai/minimax-m2.7-free': 197_000,
   'minimaxai/minimax-m2.7': 200_000,
   'minimaxai/minimax-m2.5': 200_000,
   // Step
   'stepfun/step-3.7-flash': 256_000,
   'stepfun/step-3.5-flash': 1_000_000,
   // Tencent
-  'tencent/hy3-paid': 262_000,
-  'tencent/hy3': 262_000,
+  'tencent/hy4-preview': 1_048_576,
+  'tencent/hy3-paid': 262_144,
+  'tencent/hy3': 262_144,
   // Fugu
   'sakana/fugu-ultra': 1_000_000,
   // Nemotron
@@ -109,6 +128,11 @@ const CONTEXT_LIMITS: Record<string, number> = {
   'thinkingmachines/inkling-small': 1_000_000,
   // Laguna
   'poolside/laguna-s-2.1-free': 256_000,
+  // LongCat
+  'meituan/longcat-2.0:free': 1_048_576,
+  // Ling
+  'inclusionai/ling-3.0-flash-sante:free': 262_144,
+  'inclusionai/ling-3.0-flash-free': 256_000,
 };
 
 const contextLimitFor = (model: string | undefined): number => {
