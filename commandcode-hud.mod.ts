@@ -31,6 +31,8 @@ const ANSI_CYAN = '\u001b[36m';
 const ANSI_DIM = '\u001b[2m';
 const ANSI_RESET = '\u001b[0m';
 const ANSI_YELLOW = '\u001b[33m';
+const ANSI_GREEN = '\u001b[32m';
+const ANSI_RED = '\u001b[31m';
 const BRAIN = '\uD83E\uDDE0';
 
 // Context windows per model, mirroring the official list at
@@ -164,6 +166,32 @@ const formatTokens = (value: number): string => {
 
 const STATE_ENTRY_TYPE = 'commandcode-hud/state-v1';
 
+const CTX_BAR_CELLS = 10;
+
+const renderCtxBar = (pct: number): string => {
+  const clamped = Math.min(100, Math.max(0, Math.round(pct)));
+  const filled = Math.min(CTX_BAR_CELLS, Math.floor((clamped / 100) * CTX_BAR_CELLS));
+  // Threshold colors mirror the reference statusline: green <70, yellow <90, red >=90.
+  const color = clamped >= 90 ? ANSI_RED : clamped >= 70 ? ANSI_YELLOW : ANSI_GREEN;
+  const warn = clamped >= 90 ? ` ${ANSI_RED}⚠${ANSI_RESET}` : '';
+  let bar = '';
+  for (let i = 0; i < CTX_BAR_CELLS; i++) bar += i < filled ? '█' : '░';
+  return `${color}${bar} ${clamped}%${ANSI_RESET}${warn}`;
+};
+
+const dirtyFromStatus = (stdout: string): boolean =>
+  stdout.split(/\r?\n/).some(line => line.trim() !== '' && !line.startsWith('## '));
+
+const formatDuration = (elapsedMs: number): string | undefined => {
+  const sec = Math.floor(elapsedMs / 1000);
+  if (sec <= 0) return undefined;
+  const min = Math.floor(sec / 60);
+  if (min >= 60) {
+    return `${Math.floor(min / 60)}h${min % 60}m`;
+  }
+  return `${min}m${sec % 60}s`;
+};
+
 const record = (value: unknown): Record<string, unknown> =>
   value !== null && typeof value === 'object' ? value as Record<string, unknown> : {};
 
@@ -238,7 +266,15 @@ const readModelConfig = (): {model?: string; effort?: string; mtimeMs?: number} 
 };
 
 // Export for tests.
-export const __test = {branchNameFromStatus, readModelConfig, contextLimitFor, formatTokens};
+export const __test = {
+  branchNameFromStatus,
+  dirtyFromStatus,
+  readModelConfig,
+  contextLimitFor,
+  formatTokens,
+  formatDuration,
+  renderCtxBar,
+};
 
 export default function (cmd: ModApi): void {
   let lastPublished = '';
@@ -248,6 +284,8 @@ export default function (cmd: ModApi): void {
   let currentModel = explicitModel ?? initialConfig.model ?? 'gpt-5.6-luna';
   let currentEffort: string | undefined = initialConfig.effort ?? effortFromConfig(currentModel);
   let usedTokens = 0;
+  let currentDirty = false;
+  let sessionStartedAt: number = Date.now();
 
   const render = (): string => {
     const segments: string[] = [];
@@ -260,10 +298,17 @@ export default function (cmd: ModApi): void {
     const limit = contextLimitFor(currentModel);
     if (limit > 0) {
       const percent = Math.min(100, Math.round((usedTokens / limit) * 100));
-      segments.push(`${ANSI_YELLOW}ctx ${percent}% · ${formatTokens(usedTokens)}/${formatTokens(limit)}${ANSI_RESET}`);
+      segments.push(
+        `${renderCtxBar(percent)} · ${ANSI_YELLOW}${formatTokens(usedTokens)}/${formatTokens(limit)}${ANSI_RESET}`,
+      );
     }
-    if (currentBranch) segments.push(`${ANSI_CYAN}${currentBranch}${ANSI_RESET}`);
-    else segments.push(`${ANSI_DIM}no-branch${ANSI_RESET}`);
+    if (currentBranch) {
+      segments.push(`${ANSI_CYAN}${currentBranch}${currentDirty ? '*' : ''}${ANSI_RESET}`);
+    } else {
+      segments.push(`${ANSI_DIM}no-branch${ANSI_RESET}`);
+    }
+    const duration = formatDuration(Date.now() - sessionStartedAt);
+    if (duration) segments.push(`${ANSI_DIM}${duration}${ANSI_RESET}`);
     return segments.join(' · ');
   };
 
@@ -277,7 +322,14 @@ export default function (cmd: ModApi): void {
   const persist = (): void => {
     cmd.session?.appendCustomEntry({
       customType: STATE_ENTRY_TYPE,
-      data: {branch: currentBranch, model: currentModel, effort: currentEffort, usedTokens},
+      data: {
+        branch: currentBranch,
+        dirty: currentDirty,
+        model: currentModel,
+        effort: currentEffort,
+        usedTokens,
+        sessionStartedAt,
+      },
     });
   };
 
@@ -290,10 +342,14 @@ export default function (cmd: ModApi): void {
       .at(-1);
     if (!last) return;
     currentBranch = text(last['branch']);
+    const storedDirty = last['dirty'];
+    if (typeof storedDirty === 'boolean') currentDirty = storedDirty;
     currentModel = explicitModel ?? text(last['model']) ?? currentModel;
     currentEffort = text(last['effort']) ?? currentEffort ?? effortFromConfig(currentModel);
     const storedTokens = record(last).usedTokens;
     if (typeof storedTokens === 'number') usedTokens = storedTokens;
+    const storedStart = last['sessionStartedAt'];
+    if (typeof storedStart === 'number' && storedStart > 0) sessionStartedAt = storedStart;
     lastPublished = '';
     publish(true);
   };
@@ -306,10 +362,12 @@ export default function (cmd: ModApi): void {
         cwd: cmd.cwd,
       });
       currentBranch = result.code === 0 ? branchNameFromStatus(result.stdout) : undefined;
+      currentDirty = result.code === 0 ? dirtyFromStatus(result.stdout) : false;
       persist();
       publish();
     } catch {
       currentBranch = undefined;
+      currentDirty = false;
       persist();
       publish();
     }
